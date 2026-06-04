@@ -10,6 +10,8 @@ const API_URL = 'http://localhost:8080/api/vocab';
 export default function HomePage() {
   const [vocabs, setVocabs] = useState<Vocabulary[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  const [editingVocab, setEditingVocab] = useState<Vocabulary | null>(null);
 
   const fetchVocabs = async (): Promise<void> => {
     setIsLoading(true);
@@ -29,17 +31,31 @@ export default function HomePage() {
     fetchVocabs();
   }, []);
 
-  const handleAddVocab = async (word: string, type: Vocabulary['type'], definition: string, example: string): Promise<void> => {
+
+  const handleSaveVocab = async (word: string, type: Vocabulary['type'], definition: string, example: string): Promise<void> => {
     try {
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ word, type, definition, example })
-      });
-      if (!response.ok) throw new Error('Lỗi khi thêm từ vựng mới');
+      if (editingVocab) {
+
+        const response = await fetch(`${API_URL}/${editingVocab.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word, type, definition, example })
+        });
+        if (!response.ok) throw new Error('Lỗi khi cập nhật từ vựng');
+        setEditingVocab(null); 
+      } else {
+
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word, type, definition, example })
+        });
+        if (!response.ok) throw new Error('Lỗi khi thêm từ vựng mới');
+      }
+      
       fetchVocabs(); 
     } catch (error) {
-      console.error("Lỗi khi thêm từ vựng:", error);
+      console.error("Lỗi khi lưu từ vựng:", error);
     }
   };
 
@@ -48,6 +64,7 @@ export default function HomePage() {
       try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Lỗi khi xóa từ vựng');
+        if (editingVocab?.id === id) setEditingVocab(null); 
         fetchVocabs();
       } catch (error) {
         console.error("Lỗi khi xóa từ vựng:", error);
@@ -61,11 +78,20 @@ export default function HomePage() {
         📚 Sổ Tay Từ Vựng
       </h1>
 
-      <VocabForm onAddVocab={handleAddVocab} />
+      <VocabForm 
+        editingVocab={editingVocab} 
+        onSaveVocab={handleSaveVocab} 
+        onCancelEdit={() => setEditingVocab(null)} 
+      />
 
       <h3 className="text-xl font-bold text-slate-700 mb-4">Danh sách từ hiện có ({vocabs.length})</h3>
       
-      <VocabList vocabs={vocabs} isLoading={isLoading} onDeleteVocab={handleDeleteVocab} />
+      <VocabList 
+        vocabs={vocabs} 
+        isLoading={isLoading} 
+        onDeleteVocab={handleDeleteVocab} 
+        onEditVocab={setEditingVocab} 
+      />
     </div>
   );
 }
