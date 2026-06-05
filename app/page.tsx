@@ -4,14 +4,26 @@ import { useState, useEffect } from 'react';
 import VocabForm from '@/components/VocabForm';
 import VocabList from '@/components/VocabList';
 import { Vocabulary } from '@/components/VocabCard';
+import { X, Search, Plus, BookOpenCheck } from 'lucide-react';
 
 const API_URL = 'http://localhost:8080/api/vocab';
+
+interface ModalState {
+  isOpen: boolean;
+  mode: 'create' | 'edit';
+  data: Vocabulary | null;
+}
 
 export default function HomePage() {
   const [vocabs, setVocabs] = useState<Vocabulary[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  
-  const [editingVocab, setEditingVocab] = useState<Vocabulary | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const [modalState, setModalState] = useState<ModalState>({
+    isOpen: false,
+    mode: 'create',
+    data: null
+  });
 
   const fetchVocabs = async (): Promise<void> => {
     setIsLoading(true);
@@ -19,7 +31,7 @@ export default function HomePage() {
       const response = await fetch(API_URL);
       if (!response.ok) throw new Error('Không thể kết nối đến server Backend');
       const data: Vocabulary[] = await response.json();
-      setVocabs(data);
+      setVocabs(data.reverse());
     } catch (error) {
       console.error("Lỗi khi lấy danh sách từ vựng:", error);
     } finally {
@@ -31,29 +43,45 @@ export default function HomePage() {
     fetchVocabs();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSearchQuery('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleSaveVocab = async (word: string, type: Vocabulary['type'], definition: string, example: string): Promise<void> => {
     try {
-      if (editingVocab) {
-
-        const response = await fetch(`${API_URL}/${editingVocab.id}`, {
+      if (modalState.mode === 'edit' && modalState.data) {
+        const response = await fetch(`${API_URL}/${modalState.data.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ word, type, definition, example })
         });
         if (!response.ok) throw new Error('Lỗi khi cập nhật từ vựng');
-        setEditingVocab(null); 
-      } else {
 
+        setVocabs(prevVocabs =>
+          prevVocabs.map(item =>
+            item.id === modalState.data!.id
+              ? { ...item, word, type, definition, example }
+              : item
+          )
+        );
+      } else {
         const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ word, type, definition, example })
         });
         if (!response.ok) throw new Error('Lỗi khi thêm từ vựng mới');
+
+        fetchVocabs();
       }
-      
-      fetchVocabs(); 
+
+      setModalState({ isOpen: false, mode: 'create', data: null });
     } catch (error) {
       console.error("Lỗi khi lưu từ vựng:", error);
     }
@@ -64,7 +92,6 @@ export default function HomePage() {
       try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Lỗi khi xóa từ vựng');
-        if (editingVocab?.id === id) setEditingVocab(null); 
         fetchVocabs();
       } catch (error) {
         console.error("Lỗi khi xóa từ vựng:", error);
@@ -72,26 +99,79 @@ export default function HomePage() {
     }
   };
 
+  const filteredVocabs = vocabs.filter(item => {
+    const query = searchQuery.toLowerCase().trim();
+    return (
+      item.word.toLowerCase().includes(query) ||
+      item.definition.toLowerCase().includes(query)
+    );
+  });
+
   return (
-    <div className="max-w-3xl mx-auto p-6 font-sans">
-      <h1 className="text-3xl font-bold text-center text-slate-800 mb-8">
-        📚 Sổ Tay Từ Vựng
-      </h1>
+    <div className="max-w-5xl mx-auto p-4 sm:p-8 font-sans transition-all duration-300">
 
-      <VocabForm 
-        editingVocab={editingVocab} 
-        onSaveVocab={handleSaveVocab} 
-        onCancelEdit={() => setEditingVocab(null)} 
-      />
+      <div className="mb-6 border-b border-current/10 pb-4">
+        <h1 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-3">
+          <BookOpenCheck className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-500 shrink-0" />
+          <span>Sổ Ngữ Vựng</span>
+        </h1>
+      </div>
 
-      <h3 className="text-xl font-bold text-slate-700 mb-4">Danh sách từ hiện có ({vocabs.length})</h3>
-      
-      <VocabList 
-        vocabs={vocabs} 
-        isLoading={isLoading} 
-        onDeleteVocab={handleDeleteVocab} 
-        onEditVocab={setEditingVocab} 
-      />
+      <div className="flex flex-col sm:flex-row items-center gap-2.5 sm:gap-3 mb-6">
+        <div className="relative w-full sm:flex-1">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="h-4 w-4 opacity-50" />
+          </span>
+          <input
+            type="text"
+            placeholder="Gõ từ vựng hoặc ý nghĩa để tìm nhanh..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full border border-current opacity-80 rounded-xl py-2.5 pl-10 pr-10 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-transparent transition shadow-sm font-medium text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 opacity-60 hover:opacity-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+
+        <button
+          onClick={() => setModalState({ isOpen: true, mode: 'create', data: null })}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 px-5 rounded-xl transition shadow-sm flex items-center justify-center gap-2 w-full sm:w-auto shrink-0 text-sm"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Thêm từ mới</span>
+        </button>
+      </div>
+
+      <div className="flex justify-between items-center mb-4 px-0.5 opacity-80">
+        <h3 className="text-sm sm:text-base font-bold">
+          {searchQuery ? 'Kết quả tìm kiếm' : 'Danh sách từ hiện có'} ({filteredVocabs.length})
+        </h3>
+      </div>
+
+      <div className="w-full min-h-[50vh] transition-all relative block">
+        <VocabList
+          vocabs={filteredVocabs}
+          isLoading={isLoading}
+          onDeleteVocab={handleDeleteVocab}
+          isSearching={searchQuery.trim().length > 0}
+          onEditVocab={(item) => setModalState({ isOpen: true, mode: 'edit', data: item })}
+        />
+      </div>
+
+      {modalState.isOpen && (
+        <VocabForm
+          mode={modalState.mode}
+          editingVocab={modalState.data}
+          onSaveVocab={handleSaveVocab}
+          onCancelEdit={() => setModalState({ isOpen: false, mode: 'create', data: null })}
+        />
+      )}
     </div>
   );
 }
