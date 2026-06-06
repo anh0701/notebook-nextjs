@@ -31,7 +31,7 @@ export default function HomePage() {
       const response = await fetch(API_URL);
       if (!response.ok) throw new Error('Không thể kết nối đến server Backend');
       const data: Vocabulary[] = await response.json();
-      setVocabs(data.reverse());
+      setVocabs(data);
     } catch (error) {
       console.error("Lỗi khi lấy danh sách từ vựng:", error);
     } finally {
