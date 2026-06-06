@@ -18,7 +18,7 @@ interface VocabCardProps {
 
 export default function VocabCard({ item, onDelete, onEdit }: VocabCardProps) {
   return (
-    <div className="border border-current opacity-90 rounded-xl p-6 relative shadow-sm hover:shadow-md transition-all duration-200">
+    <div className="w-full border border-current opacity-90 rounded-xl p-6 relative shadow-sm hover:shadow-md transition-all duration-200">
 
       <div className="absolute top-4 right-4 flex gap-2">
         <button

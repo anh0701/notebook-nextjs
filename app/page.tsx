@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import VocabForm from '@/components/VocabForm';
 import VocabList from '@/components/VocabList';
 import { Vocabulary } from '@/components/VocabCard';
 import { X, Search, Plus, BookOpenCheck } from 'lucide-react';
 
 const API_URL = 'http://localhost:8080/api/vocab';
+
 
 interface ModalState {
   isOpen: boolean;
@@ -18,6 +19,9 @@ export default function HomePage() {
   const [vocabs, setVocabs] = useState<Vocabulary[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [isApiSearching, setIsApiSearching] = useState<boolean>(false);
 
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -25,23 +29,50 @@ export default function HomePage() {
     data: null
   });
 
-  const fetchVocabs = async (): Promise<void> => {
-    setIsLoading(true);
+  const fetchVocabs = useCallback(async (searchKey: string = '', showSkeleton: boolean = false): Promise<void> => {
+    if (showSkeleton) setIsLoading(true);
+    if (searchKey) setIsApiSearching(true);
+
     try {
-      const response = await fetch(API_URL);
+      const url = searchKey
+        ? `${API_URL}?search=${encodeURIComponent(searchKey.trim())}`
+        : API_URL;
+
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Không thể kết nối đến server Backend');
+
       const data: Vocabulary[] = await response.json();
       setVocabs(data);
+
     } catch (error) {
-      console.error("Lỗi khi lấy danh sách từ vựng:", error);
+      console.error("Lỗi khi fetch dữ liệu:", error);
     } finally {
       setIsLoading(false);
+      setIsApiSearching(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchVocabs();
-  }, []);
+    fetchVocabs('', true);
+  }, [fetchVocabs]);
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) {
+      setIsSearching(false);
+      fetchVocabs('');
+      return;
+    }
+
+    setIsSearching(true);
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchVocabs(trimmedQuery);
+    }, 350);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery, fetchVocabs]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -78,7 +109,7 @@ export default function HomePage() {
         });
         if (!response.ok) throw new Error('Lỗi khi thêm từ vựng mới');
 
-        fetchVocabs();
+        fetchVocabs(searchQuery);
       }
 
       setModalState({ isOpen: false, mode: 'create', data: null });
@@ -92,20 +123,12 @@ export default function HomePage() {
       try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Lỗi khi xóa từ vựng');
-        fetchVocabs();
+        fetchVocabs(searchQuery);
       } catch (error) {
         console.error("Lỗi khi xóa từ vựng:", error);
       }
     }
   };
-
-  const filteredVocabs = vocabs.filter(item => {
-    const query = searchQuery.toLowerCase().trim();
-    return (
-      item.word.toLowerCase().includes(query) ||
-      item.definition.toLowerCase().includes(query)
-    );
-  });
 
   return (
     <div className="max-w-5xl mx-auto p-4 sm:p-8 font-sans transition-all duration-300">
@@ -150,13 +173,13 @@ export default function HomePage() {
 
       <div className="flex justify-between items-center mb-4 px-0.5 opacity-80">
         <h3 className="text-sm sm:text-base font-bold">
-          {searchQuery ? 'Kết quả tìm kiếm' : 'Danh sách từ hiện có'} ({filteredVocabs.length})
+          {searchQuery ? 'Kết quả tìm kiếm' : 'Danh sách từ hiện có'} ({vocabs.length})
         </h3>
       </div>
 
       <div className="w-full min-h-[50vh] transition-all relative block">
         <VocabList
-          vocabs={filteredVocabs}
+          vocabs={vocabs}
           isLoading={isLoading}
           onDeleteVocab={handleDeleteVocab}
           isSearching={searchQuery.trim().length > 0}
