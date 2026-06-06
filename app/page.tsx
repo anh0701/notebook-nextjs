@@ -8,7 +8,6 @@ import { X, Search, Plus, BookOpenCheck } from 'lucide-react';
 
 const API_URL = 'http://localhost:8080/api/vocab';
 
-
 interface ModalState {
   isOpen: boolean;
   mode: 'create' | 'edit';
@@ -17,11 +16,11 @@ interface ModalState {
 
 export default function HomePage() {
   const [vocabs, setVocabs] = useState<Vocabulary[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true); 
   const [searchQuery, setSearchQuery] = useState<string>('');
-  
+
   const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [isApiSearching, setIsApiSearching] = useState<boolean>(false);
+  const [isApiSearching, setIsApiSearching] = useState<boolean>(false); 
 
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
@@ -30,27 +29,27 @@ export default function HomePage() {
   });
 
   const fetchVocabs = useCallback(async (searchKey: string = '', showSkeleton: boolean = false): Promise<void> => {
-    if (showSkeleton) setIsLoading(true);
-    if (searchKey) setIsApiSearching(true);
+    if (showSkeleton) setIsLoading(true); 
+    if (searchKey) setIsApiSearching(true); 
 
     try {
-      const url = searchKey
-        ? `${API_URL}?search=${encodeURIComponent(searchKey.trim())}`
+      const url = searchKey 
+        ? `${API_URL}?search=${encodeURIComponent(searchKey)}` 
         : API_URL;
 
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Không thể kết nối đến server Backend');
-
+      if (!response.ok) throw new Error('Không thể kết nối đến server Backend CI4');
       const data: Vocabulary[] = await response.json();
+      
       setVocabs(data);
-
     } catch (error) {
-      console.error("Lỗi khi fetch dữ liệu:", error);
+      console.error("Lỗi khi lấy danh sách từ vựng từ CI4:", error);
     } finally {
       setIsLoading(false);
       setIsApiSearching(false);
     }
   }, []);
+
 
   useEffect(() => {
     fetchVocabs('', true);
@@ -58,7 +57,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
-
+    
     if (!trimmedQuery) {
       setIsSearching(false);
       fetchVocabs('');
@@ -123,7 +122,7 @@ export default function HomePage() {
       try {
         const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Lỗi khi xóa từ vựng');
-        fetchVocabs(searchQuery);
+        fetchVocabs(searchQuery); 
       } catch (error) {
         console.error("Lỗi khi xóa từ vựng:", error);
       }
@@ -147,7 +146,7 @@ export default function HomePage() {
           </span>
           <input
             type="text"
-            placeholder="Gõ từ vựng hoặc ý nghĩa để tìm nhanh..."
+            placeholder="Gõ từ vựng hoặc ý nghĩa để tìm nhanh từ Database..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full border border-current opacity-80 rounded-xl py-2.5 pl-10 pr-10 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-transparent transition shadow-sm font-medium text-sm"
@@ -173,16 +172,16 @@ export default function HomePage() {
 
       <div className="flex justify-between items-center mb-4 px-0.5 opacity-80">
         <h3 className="text-sm sm:text-base font-bold">
-          {searchQuery ? 'Kết quả tìm kiếm' : 'Danh sách từ hiện có'} ({vocabs.length})
+          {searchQuery ? 'Kết quả tìm kiếm từ server' : 'Danh sách từ hiện có'} ({vocabs.length})
         </h3>
       </div>
 
-      <div className="w-full min-h-[50vh] transition-all relative block">
+      <div className={`w-full min-h-[50vh] transition-all duration-200 relative block ${isApiSearching ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
         <VocabList
-          vocabs={vocabs}
-          isLoading={isLoading}
+          vocabs={vocabs} 
+          isLoading={isLoading} 
           onDeleteVocab={handleDeleteVocab}
-          isSearching={searchQuery.trim().length > 0}
+          isSearching={isSearching}
           onEditVocab={(item) => setModalState({ isOpen: true, mode: 'edit', data: item })}
         />
       </div>

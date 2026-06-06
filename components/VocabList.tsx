@@ -28,9 +28,10 @@ export default function VocabList({
     );
   }
 
-  if (vocabs.length === 0) {
-    return (
-      <div className="w-full min-h-150 flex flex-col items-center justify-center border border-dashed border-current/15 rounded-2xl p-6 shadow-sm bg-current/[0.01] text-center">
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-h-150 content-start items-start">
+      { vocabs.length === 0 ? (
+        <div className="md:col-span-2 min-h-150 w-full flex flex-col items-center justify-center border border-dashed border-current/15 rounded-2xl p-6 shadow-sm bg-current/[0.01] text-center">
         {isSearching ? (
           <div className="flex flex-col items-center max-w-sm animate-fade-in">
             <SearchCheck className="h-12 w-12 text-indigo-500 mb-4 shrink-0" />
@@ -45,24 +46,20 @@ export default function VocabList({
           </div>
         )}
       </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-h-150 content-start items-start">
-      {vocabs.map((item) => (
-        <div
-          key={item.id}
-          className={vocabs.length === 1 ? "md:col-span-2" : ""}
-        >
-          <VocabCard
-          key={item.id}
-            item={item}
-            onDelete={onDeleteVocab}
-            onEdit={onEditVocab}
-          />
-        </div>
-      ))}
+      ):(
+        vocabs.map((item) => (
+          <div
+            key={item.id}
+            className={vocabs.length === 1 ? "md:col-span-2 w-full" : "w-full"}
+          >
+            <VocabCard
+              item={item}
+              onDelete={onDeleteVocab}
+              onEdit={onEditVocab}
+            />
+          </div>
+        ))
+      )}
     </div>
   );
 }
