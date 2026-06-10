@@ -18,7 +18,7 @@ interface VocabCardProps {
 
 export default function VocabCard({ item, onDelete, onEdit }: VocabCardProps) {
   return (
-    <div className="w-full h-full border border-current opacity-90 rounded-xl p-6 relative shadow-sm hover:shadow-md transition-all duration-200">
+    <div className="w-full h-full border border-current opacity-90 rounded-xl p-6 relative shadow-sm hover:shadow-md transition-all duration-200 flex flex-col  min-h-[220px]">
 
       <div className="absolute top-4 right-4 flex gap-2">
         <button
@@ -44,16 +44,21 @@ export default function VocabCard({ item, onDelete, onEdit }: VocabCardProps) {
         <span>{item.definition}</span>
       </p>
 
-      {item.example && (
-        <div className="relative mt-3 p-3 pl-4 border-l-4 border-emerald-500 rounded-r-lg bg-emerald-500/10 text-base italic">
-          <span className="font-semibold not-italic text-emerald-600 dark:text-emerald-400 mr-1.5">
-            Ví dụ:
-          </span>
-          <span className="opacity-90">
-            {item.example}
-          </span>
-        </div>
-      )}
+      <div className="mt-4">
+        {item.example ? (
+          <div className="border-l-4 border-emerald-500 bg-emerald-500/10 px-4 py-3 rounded-r-lg h-full">
+            <div className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mb-1">
+              Ví dụ
+            </div>
+
+            <p className="italic leading-relaxed text-current/90">
+              {item.example}
+            </p>
+          </div>
+        ) : (
+          <div className="h-full border-l-4 border-transparent" />
+        )}
+      </div>
     </div>
   );
 }

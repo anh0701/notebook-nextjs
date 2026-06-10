@@ -29,7 +29,7 @@ export default function VocabList({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-h-150 content-start items-start">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full min-h-[50vh] content-start items-stretch">
       { vocabs.length === 0 ? (
         <div className="md:col-span-2 min-h-150 w-full flex flex-col items-center justify-center border border-dashed border-current/15 rounded-2xl p-6 shadow-sm bg-current/[0.01] text-center">
         {isSearching ? (
@@ -50,7 +50,11 @@ export default function VocabList({
         vocabs.map((item) => (
           <div
             key={item.id}
-            className={vocabs.length === 1 ? "md:col-span-2 w-full" : "w-full"}
+            className={
+              vocabs.length === 1
+                ? "md:col-span-2 w-full h-full"
+                : "w-full h-full"
+            }
           >
             <VocabCard
               item={item}

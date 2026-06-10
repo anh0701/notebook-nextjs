@@ -146,7 +146,7 @@ export default function HomePage() {
           </span>
           <input
             type="text"
-            placeholder="Gõ từ vựng hoặc ý nghĩa để tìm nhanh từ Database..."
+            placeholder="Gõ từ vựng hoặc ý nghĩa để tìm nhanh ..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full border border-current opacity-80 rounded-xl py-2.5 pl-10 pr-10 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-transparent transition shadow-sm font-medium text-sm"
