@@ -130,7 +130,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-8 font-sans transition-all duration-300">
+    <div className="w-5xl mx-auto p-4 sm:p-8 font-sans transition-all duration-300">
 
       <div className="mb-6 border-b border-current/10 pb-4">
         <h1 className="text-2xl sm:text-3xl font-extrabold flex items-center gap-3">
